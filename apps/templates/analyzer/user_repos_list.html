@@ -1,0 +1,22 @@
+{% extends "../main/base.html" %}
+{% load static %}
+
+{% block content %}
+    {% if repositories %}
+        <div id="repos" style="margin: 8px; width: 50%;">
+            {% for repo in repositories %}
+                <a href="{% url 'repository_detail' repo.id %}" style="margin: 8px;">
+                    <p style="border: 1px solid black; padding: 10px;">{{ repo.name }}</p>
+                </a>
+
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="ops" style="text-align: center; margin-top: 200px; font-size: 30px;">
+            <P>Ops..</P>
+            <p>No repositories yet</p>
+            <p>Add one</p>
+            <a href="{% url 'create_repository' %}" style="text-decoration: none">Add new repository</a>
+        </div>
+    {% endif %}
+{% endblock content %}

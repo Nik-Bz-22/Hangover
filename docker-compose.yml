@@ -1,0 +1,47 @@
+services:
+  django:
+    build: .
+    container_name: Hangover_container
+    ports:
+      - "8000:8000"
+    depends_on:
+      - celery
+      - db
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - DJANGO_SETTINGS_MODULE=BaseApp.settings
+    volumes:
+      - ./db:/wd/db
+
+  celery:
+    build:
+      context: .
+    container_name: celery_worker_container
+    command: celery -A BaseApp worker --loglevel=info
+    depends_on:
+      - redis
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - DJANGO_SETTINGS_MODULE=BaseApp.settings
+
+  redis:
+    image: redis:latest
+    container_name: redis_for_celery_container
+    ports:
+      - "6400:6379"
+
+  db:
+    image: postgres:latest
+    container_name: postgres_container
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 12345
+      POSTGRES_DB: my_postgres_db
+
+
+
+
+
+

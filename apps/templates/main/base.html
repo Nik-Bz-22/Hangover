@@ -1,0 +1,54 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>
+        {{ title }}
+    </title>
+    {% block head %} {% endblock head %}
+    <link rel="stylesheet" href="{% static 'CSS/base.css' %}">
+
+</head>
+<body>
+    <div class="message-container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="message">
+                    <p>{{ message }}</p>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+    <div class="navbar">
+    <div id="brand">HangOver</div>
+    <img src="{% static 'images/Logo.ico' %}" alt="logo" id="logo">
+    <div>
+        {% for item in menu %}
+{#            <p>{{ item }}</p>#}
+            {% if item.login_require and user.is_authenticated %}
+                <a href="{% url item.path_name %}">{{ item.name }}</a>
+            {% elif item.always_show%}
+                <a href="{% url item.path_name %}">{{ item.name }}</a>
+            {% elif not item.login_require and not user.is_authenticated %}
+                <a href="{% url item.path_name %}">{{ item.name }}</a>
+            {% endif %}
+        {% endfor %}
+        {% if user.is_authenticated %}
+            <form action="{% url 'log_out' %}" method="post">
+                {% csrf_token %}
+                <button type="submit">Log out | {{ user.username }}</button>
+            </form>
+        {% endif %}
+    </div>
+</div>
+
+
+    {% block content %}
+    {% endblock content %}
+
+    <script src="{% static 'JavaScript/base.js' %}"></script>
+    {% block script %} {% endblock script %}
+
+</body>
+</html>

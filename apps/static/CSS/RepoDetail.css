@@ -1,0 +1,110 @@
+#workspace {
+    display: flex;
+    height: 100vh;
+    font-family: Arial, sans-serif;
+    overflow-y: hidden;
+}
+
+.sidebar {
+    width: 17%;
+    background-color: #727272;
+    border-right: 1px solid #3e3e3e;
+    overflow-y: auto;
+    padding: 15px;
+    white-space: nowrap;
+}
+
+.code-box {
+    width: 50%;
+    border-right: 1px solid #ddd;
+    white-space: nowrap;
+}
+
+#pre-code-box {
+    height: 100%;
+}
+
+#code {
+    height: 100%;
+    font-size: 16px;
+    overflow-x: auto;
+    overflow-y: auto;
+    white-space: pre;
+    display: block;
+    padding: 15px;
+}
+
+.content {
+    flex-grow: 1;
+    padding: 15px;
+    background-color: darkgray;
+}
+
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+.folder {
+    cursor: pointer;
+    font-weight: bold;
+}
+
+ul ul {
+    display: none;
+}
+
+.no-select {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+textarea {
+    width: 100%;
+    height: 100%;
+    resize: none;
+    padding: 10px;
+    font-size: 20px;
+}
+#prompt-form {
+    height: 70%;
+}
+#submit-prompt {
+    width: 100%;
+    height: 5%;
+    background-color: #3e3e3e;
+    color: white;
+    border: none;
+    font-size: 20px;
+}
+#submit-prompt:active {
+    background-color: #2e2e2e;
+    transform: translateY(2px);
+}
+
+h1 {
+    text-align: center;
+}
+#questions {
+    margin-top: 50px;
+    overflow-y: auto;
+    max-height: 20%;
+}
+
+.question-wrapper {
+    border: 1px solid #3e3e3e;
+    border-radius: 5px;
+    margin: 4px;
+    cursor: pointer;
+    padding: 4px;
+}
+.tree-node-type {
+    height: 15px;
+}
+
+.file-icon {
+    margin-left: 15px;
+}

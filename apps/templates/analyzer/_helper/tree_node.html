@@ -1,0 +1,18 @@
+{% load custom_filters %}
+{% load static %}
+
+{% for key, value in tree.items %}
+    <li>
+        {% if value %}
+            <img src="{% static 'images/folder.svg' %}" alt="folder images" class="tree-node-type folder-icon">
+            <span class="folder">{{ key|safe }}</span>
+            <ul>
+                {% include "analyzer/_helper/tree_node.html" with tree=value current_path=current_path|add:'/'|add:key|strip:"/" %}
+            </ul>
+        {% else %}
+            <img src="{% static 'images/file.svg' %}" alt="file images" class="tree-node-type file-icon">
+            <span class="file">{{ key|safe }}</span>
+            <input class="dynamic-checkbox" type="checkbox" value="{{ current_path|add:'/'|add:key }}">
+        {% endif %}
+    </li>
+{% endfor %}
