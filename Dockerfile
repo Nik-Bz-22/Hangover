@@ -13,7 +13,7 @@ RUN useradd --system ${USER} && \
 RUN apt update && apt upgrade --yes
 
 COPY --chown=${USER} requirements.txt requirements.txt
-COPY --chown=${USER} .env .env
+COPY --chown=${USER} .env.main .env.main
 
 RUN pip install --upgrade pip && \
     pip install --requirement requirements.txt

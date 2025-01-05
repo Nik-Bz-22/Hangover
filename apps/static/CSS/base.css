@@ -14,7 +14,7 @@
     max-width: 400px;
 }
 
-.message {
+.message-top {
     background-color: #f0f8ff;
     color: #000;
     padding: 10px;
@@ -41,7 +41,7 @@
     }
 }
 
-.navbar {
+.navbar-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -52,7 +52,7 @@
 
 }
 
-.navbar a, .navbar button {
+.navbar-top a, .navbar-top button {
     color: white;
     text-decoration: none;
     padding: 8px 16px;
@@ -63,26 +63,26 @@
     transition: background-color 0.3s;
 }
 
-.navbar a:hover, .navbar button:hover {
+.navbar-top a:hover, .navbar-top button:hover {
     background-color: #fd6c1b;
     border-radius: 5px;
 }
 
-.navbar .brand {
+.navbar-top .brand {
     font-size: 24px;
     font-weight: bold;
 }
 
-.navbar form {
+.navbar-top form {
     display: inline;
 }
 
 @media (max-width: 768px) {
-    .navbar {
+    .navbar-top {
         flex-direction: column;
     }
 
-    .navbar a, .navbar button {
+    .navbar-top a, .navbar-top button {
         display: block;
         text-align: center;
     }

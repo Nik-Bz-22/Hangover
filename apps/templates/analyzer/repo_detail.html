@@ -11,8 +11,19 @@
 
 {% block content %}
     <div id="workspace">
-        <div class="sidebar no-select" id="repo-tree">
-            <ul>
+
+        <div class="sidebar_tree no-select" id="repo-tree">
+            <div class="dropdown" id="dropdown">
+                <div class="dropdown-label">☰ branches</div>
+                <div class="dropdown-content">
+                    <div href="?branch={{ selected_branch.name }}" id="selected-branch-option">{{ selected_branch.name }}</div>
+                    {% for branch in all_branches %}
+                        <a href="?branch={{ branch.name }}">{{ branch.name }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <ul style="margin-top: 5px;">
                 {% include "analyzer/_helper/tree_node.html" with tree=file_tree current_path="" %}
             </ul>
         </div>
@@ -34,8 +45,11 @@
             </form>
             <ul id="questions">
                 {% for question in  questions %}
-                    <li class="question-wrapper" question-id="{{ question.id }}">
-                        {{ question|safe }}
+                    <li question-id="{{ question.id }}" class="question-wrapper">
+                        <div class="d-flex flex-row-reverse question-text">
+                            <div class="del-button" q-id="{{ question.id }}">del</div>
+                            <div> {{ question|safe }} </div>
+                        </div>
                     </li>
                 {% endfor %}
             </ul>
@@ -52,8 +66,17 @@
         const repoID = "{{ repository.id }}";
         const repo_owner = urlTokens.at(-2);
         const repo_name = urlTokens.at(-1);
+        const selectedBranchName = "{{ selected_branch.name }}";
+        const selectedBranchID = "{{ selected_branch.id }}";
+        const questionDeleteUrl = "{% url 'api_delete_question' %}";
     </script>
     <script src="{% static 'JavaScript/RepoDetail.js' %}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+
+    </script>
 {% endblock script %}
+
+
+

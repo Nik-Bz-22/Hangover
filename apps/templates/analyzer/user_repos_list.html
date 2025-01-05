@@ -5,9 +5,11 @@
     {% if repositories %}
         <div id="repos" style="margin: 8px; width: 50%;">
             {% for repo in repositories %}
-                <a href="{% url 'repository_detail' repo.id %}" style="margin: 8px;">
-                    <p style="border: 1px solid black; padding: 10px;">{{ repo.name }}</p>
-                </a>
+                <div>
+                    <a href="{% url 'repository_detail' repo.id %}">
+                        <p style="border: 1px solid black; padding: 10px;">{{ repo.name }}</p>
+                    </a>
+                </div>
 
             {% endfor %}
         </div>

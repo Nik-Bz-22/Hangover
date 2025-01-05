@@ -14,8 +14,8 @@ function openDatabase() {
     });
 }
 
-async function getRepoModifiedStatus(repo_owner, repo_name) {
-    const ModifiedDate = localStorage.getItem(`${repo_owner}/${repo_name}/ModifiedDate`);
+async function getRepoModifiedStatus(repo_owner, repo_name, selectedBranchName) {
+    const ModifiedDate = localStorage.getItem(`${repo_owner}/${repo_name}/${selectedBranchName}/ModifiedDate`);
 
     if (ModifiedDate) {
         const requestOptions = {
@@ -23,35 +23,35 @@ async function getRepoModifiedStatus(repo_owner, repo_name) {
             headers: { "If-Modified-Since": ModifiedDate }
         };
 
-        const response = await fetch(`https://api.github.com/repos/${repo_owner}/${repo_name}/contents`, requestOptions);
+        const response = await fetch(`https://api.github.com/repos/${repo_owner}/${repo_name}/contents?ref=${selectedBranchName}`, requestOptions);
         if (response.status === 200) {
-            localStorage.setItem(`${repo_owner}/${repo_name}/ModifiedDate`, response.headers.get("Last-Modified"));
+            localStorage.setItem(`${repo_owner}/${repo_name}/${selectedBranchName}/ModifiedDate`, response.headers.get("Last-Modified"));
             return true;
         }
         return false;
     }
 
-    localStorage.setItem(`${repo_owner}/${repo_name}/ModifiedDate`, new Date().toUTCString());
+    localStorage.setItem(`${repo_owner}/${repo_name}/${selectedBranchName}/ModifiedDate`, new Date().toUTCString());
     return true;
 }
 
-async function preloadData(repo_owner, repo_name, innerApiUrl) {
+async function preloadData(repo_owner, repo_name, innerApiUrl, selectedBranchName) {
     try {
-        if (!await getRepoModifiedStatus(repo_owner, repo_name)) {
+        if (!await getRepoModifiedStatus(repo_owner, repo_name, selectedBranchName)) {
             console.log("No changes in repo");
             return;
         }
 
         console.log("Preloading data");
         const db = await openDatabase();
-        const response = await fetch(innerApiUrl);
+        const response = await fetch(`${innerApiUrl}?branch=${selectedBranchName}`);
         const data = await response.json();
 
         const transaction = db.transaction('cacheStore', 'readwrite');
         const store = transaction.objectStore('cacheStore');
 
         for (const [fileName, content] of Object.entries(data)) {
-            const filePath = `${repo_owner}/${repo_name}/${fileName}`;
+            const filePath = `${repo_owner}/${repo_name}/${selectedBranchName}/${fileName}`;
             store.put({ filePath, content });
         }
 
@@ -67,15 +67,17 @@ async function preloadData(repo_owner, repo_name, innerApiUrl) {
     }
 }
 
-async function getData(fileName, repo_owner) {
+async function getData(fileName, repo_owner, repo_name, selectedBranchName) {
     try {
         const db = await openDatabase();
         const transaction = db.transaction('cacheStore', 'readonly');
         const store = transaction.objectStore('cacheStore');
-        const filePath = `${repo_owner}/${fileName}`;
+        const filePath = fileName.split("/").slice(1).join("/");
+        const fileKey = `${repo_owner}/${repo_name}/${selectedBranchName}/${filePath}`;
+        console.log(fileKey);
 
         return new Promise((resolve, reject) => {
-            const request = store.get(filePath);
+            const request = store.get(fileKey);
             request.onsuccess = () => resolve(request.result ? request.result.content : null);
             request.onerror = (event) => reject(event.target.error);
         });
@@ -90,10 +92,11 @@ function setupFileListeners(repo_owner, repo_name) {
         file.addEventListener("dblclick", async () => {
             const filePath = file.nextElementSibling.value;
             try {
-                let data = await getData(filePath, repo_owner);
+                let data = await getData(filePath, repo_owner, repo_name, selectedBranchName);
                 if (!data) {
-                    const response = await fetch(`https://api.github.com/repos/${repo_owner}/${repo_name}/contents/${filePath.split("/").slice(1).join("/")}`);
+                    const response = await fetch(`https://api.github.com/repos/${repo_owner}/${repo_name}/contents/${filePath.split("/").slice(1).join("/")}?ref=${selectedBranchName}`);
                     data = atob((await response.json()).content);
+                    console.log("Getting data from github");
                 }
 
                 const codeTag = document.getElementById("code");
@@ -135,13 +138,13 @@ function setupFormListeners() {
                 "Content-Type": "application/json",
                 "X-CSRFToken": csrfToken
             },
-            body: JSON.stringify({ description, selected_files: JSON.stringify(values), repo_id: repoID })
+            body: JSON.stringify({ description, selected_files: JSON.stringify(values), branch_id: selectedBranchID })
         });
 
         const answer = await response.json();
         const codeTag = document.getElementById("code");
         codeTag.innerHTML = marked.parse(Object.values(answer)[0]);
-        codeTag.classList = ["hljs", "language-markdown"];
+        codeTag.classList = ["hljs language-markdown"];
         hljs.highlightAll();
     });
 }
@@ -170,10 +173,40 @@ function setupQuestionListeners() {
     });
 }
 
+const dropdown = document.getElementById('dropdown');
+const label = dropdown.querySelector('.dropdown-label');
+
+label.addEventListener('click', (event) => {
+    dropdown.classList.toggle('open');
+    event.stopPropagation();
+});
+
+document.addEventListener('click', () => {
+    dropdown.classList.remove('open');
+});
+
 document.addEventListener('DOMContentLoaded', async () => {
     setupFileListeners(repo_owner, repo_name);
     setupFolderListeners();
     setupFormListeners();
     setupQuestionListeners();
-    await preloadData(repo_owner, repo_name, innerApiUrl);
+    deleteQuestion();
+    await preloadData(repo_owner, repo_name, innerApiUrl, selectedBranchName);
 });
+
+
+function deleteQuestion(){
+    document.querySelectorAll(".del-button").forEach(question => {
+        question.addEventListener("click", async () => {
+
+            const questionId = question.getAttribute("q-id");
+            const response = await fetch(`${questionDeleteUrl}?question_id=${questionId}`, {
+                method: "Delete",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            });
+            console.log(response.json());
+            question.parentElement.parentElement.remove();
+        })})}

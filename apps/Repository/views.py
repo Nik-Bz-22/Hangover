@@ -3,9 +3,11 @@ from django.views.generic.edit import FormView
 from django.views.generic.list import ListView
 from django.http import JsonResponse, Http404
 from django.views.generic import DetailView
+from django.shortcuts import redirect
+from django.contrib import messages
 
-from BaseApp.settings import GITHUB_TOKEN, GEMINI_MODEL, GEMINI_API_KEY
-from apps.Core.models import Repository, Question
+from apps.Repository.utils import BuildFileTreeHTML, clear_git_api_response, get_repo_name_and_owner, FILE_URL, AIFactory, GIT_HEADERS, PRE_PROMPT_TEXT
+from apps.Core.models import Repository, Prompt, Branch
 from apps.Repository.tasks import fill_repository
 from apps.Repository.forms import RepositoryForm
 from apps.Core.utils import DataMixin
@@ -14,8 +16,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
 
-import google.generativeai as genai
-import base64
 import httpx
 import json
 
@@ -31,10 +31,12 @@ class CreateRepositoryView(DataMixin, LoginRequiredMixin, FormView):
         repository.user = self.request.user
         repository.save()
         fill_repository.delay(repository.id, form.cleaned_data['url'])
-        return JsonResponse({'status': 'success'})
+        messages.info(self.request, "Repository adding is in progress.")
+        return redirect("home")
 
     def form_invalid(self, form):
-        return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
+        messages.error(self.request, "Invalid data.")
+        return redirect("create_repository")
 
 
 class UserRepositoriesView(DataMixin, LoginRequiredMixin, ListView):
@@ -58,22 +60,6 @@ class UserRepositoriesView(DataMixin, LoginRequiredMixin, ListView):
         return super().render_to_response(context, **response_kwargs)
 
 
-class BuildFileTreeHTML:
-    @staticmethod
-    def build_tree(file_list, repo_name):
-        tree = {}
-        for file_path in file_list:
-            parts = file_path.split('/')
-            current_level = tree
-            for part in parts:
-                if part not in current_level:
-                    current_level[part] = {}
-                current_level = current_level[part]
-
-        main_tree = {repo_name: tree}
-        return main_tree
-
-
 class RepositoryDetailView(DataMixin, LoginRequiredMixin, DetailView):
     model = Repository
     template_name = "analyzer/repo_detail.html"
@@ -88,26 +74,27 @@ class RepositoryDetailView(DataMixin, LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['files'] = self.object.files
+        selected_branch_name = self.request.GET.get("branch", "main")
+
+        try:
+            selected_branch = self.object.branches.get(name=selected_branch_name)
+        except Branch.DoesNotExist:
+            selected_branch = self.object.branches.first()
+
+        all_branches = self.object.branches.exclude(name=selected_branch_name)
+
+        context['files'] = selected_branch.files
+
         html_build = BuildFileTreeHTML()
-        tree = html_build.build_tree(self.object.files, self.object.name)
+        tree = html_build.build_tree(selected_branch.files, self.object.name)
         context['file_tree'] = tree
-        questions = Question.objects.filter(repository=self.object)
+        context['all_branches'] = all_branches
+        context['selected_branch'] = selected_branch
+
+        questions = Prompt.objects.filter(branch=selected_branch)
         context['questions'] = questions
+
         return context
-
-
-
-def clear_git_api_response(api_response) -> str:
-    file_meta_info = api_response.json()
-    encoded_file_content = file_meta_info.get("content")
-
-    try:
-        clear_content = base64.b64decode(encoded_file_content).decode("utf-8")
-    except (ValueError, UnicodeDecodeError) as exc:
-        print(exc)
-        return "File content could not be decoded."
-    return clear_content
 
 
 class RepoContentAPI(APIView):
@@ -118,23 +105,26 @@ class RepoContentAPI(APIView):
         if repository.user != request.user:
             raise Http404("You don't have access to this repository.")
 
+        branch_name = request.GET.get("branch", "main")
+        if not branch_name:
+            raise Http404("This branch does not exist.")
+        branch = repository.branches.get(name=branch_name)
+
+
         file_content = {}
-        FILE_URL = "https://api.github.com/repos/{owner}/{repo_name}/contents/{file_path}"
-        owner, repo = repository.url.split('/')[-2:]
+        owner, repo = get_repo_name_and_owner(repository.url)
         with httpx.Client() as client:
-            for file in repository.files:
+            for file in branch.files:
                 if file.split(".")[-1] in RepoContentAPI.black_list_file_type:
                     file_content[file] = "File not found"
                     continue
 
-                resp = client.get(FILE_URL.format(owner=owner, repo_name=repo, file_path=file),
-                                  headers={"Authorization": f"Bearer {GITHUB_TOKEN}",
-                                           "Accept": "application/vnd.github+json",
-                                           "X-GitHub-Api-Version": "2022-11-28"}
+                resp = client.get(FILE_URL.format(owner=owner, repo_name=repo, file_path=file, branch=branch_name),
+                                  headers=GIT_HEADERS
                                   )
 
                 if resp.status_code == 403:
-                    resp = client.get(FILE_URL.format(owner=owner, repo_name=repo, file_path=file))
+                    resp = client.get(FILE_URL.format(owner=owner, repo_name=repo, file_path=file, branch=branch_name))
 
 
                 if resp.status_code == 200:
@@ -148,44 +138,30 @@ class RepoContentAPI(APIView):
 class CodeAnalyzeAPI(APIView):
     def post(self, request):
         file_paths = request.data.get("selected_files")
-        repo_id = request.data.get("repo_id")
+        branch_id = request.data.get("branch_id")
         user_question = request.data.get("description")
-        repository = Repository.objects.get(id=repo_id)
+        current_branch = Branch.objects.get(id=branch_id)
+        repository = current_branch.repository
 
-        FILE_URL = "https://api.github.com/repos/{owner}/{repo_name}/contents/{file_path}"
-        owner, repo = repository.url.split('/')[-2:]
+        owner, repo = get_repo_name_and_owner(repository.url)
+
+        prompt = PRE_PROMPT_TEXT + user_question + "\n\n files: "
 
         prompt_context = {}
-
-        genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel(model_name=GEMINI_MODEL)
-
-        pre_prompt_text = """
-            Руководство к формату ответа:
-            Свой ответ подай в виде сплошного текста без пропусков строк. Если нужно будет написать фрагмент кода, то просто начни его писать с новой строки.
-            
-            
-        """
-
-        prompt = pre_prompt_text + user_question + "\n\n files: "
-
         with httpx.Client() as client:
             for file in json.loads(file_paths):
-                url = FILE_URL.format(owner=owner, repo_name=repo, file_path=file)
-                print(f"{url=}")
-                resp = client.get(url, headers={"Authorization": f"Bearer {GITHUB_TOKEN}",
-                                           "Accept": "application/vnd.github+json",
-                                           "X-GitHub-Api-Version": "2022-11-28"})
+                url = FILE_URL.format(owner=owner, repo_name=repo, file_path=file, branch=current_branch.name)
+                resp = client.get(url, headers=GIT_HEADERS)
 
                 if resp.status_code == 200:
                     content = clear_git_api_response(resp)
                     prompt_context[file] = content
 
-        response = model.generate_content(prompt + json.dumps(prompt_context))
-        answer = response.parts.pop(0).text
+        model = AIFactory.get_ai_instance("gemini")
+        answer = model.generate_answer(prompt + json.dumps(prompt_context))
 
-        Question.objects.create(
-            repository=repository,
+        Prompt.objects.create(
+            branch=current_branch,
             prompt=user_question,
             answer=answer,
             files_context=file_paths
@@ -196,6 +172,13 @@ class CodeAnalyzeAPI(APIView):
 class QuestionDetailAPIView(APIView):
     def get(self, request):
         question_id = request.GET.get("question_id")
-        question = Question.objects.get(id=question_id)
+        question = Prompt.objects.get(id=question_id)
         files_context = json.loads(question.files_context)
         return Response({"prompt": question.prompt, "answer": question.answer, "files_context": files_context}, status=status.HTTP_200_OK)
+
+
+class DeleteQuestionAPIView(APIView):
+    def delete(self, request):
+        question_id = request.GET.get("question_id")
+        Prompt.objects.get(id=question_id).delete()
+        return Response({"success": True}, status=status.HTTP_200_OK)

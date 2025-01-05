@@ -5,7 +5,7 @@
     overflow-y: hidden;
 }
 
-.sidebar {
+.sidebar_tree {
     width: 17%;
     background-color: #727272;
     border-right: 1px solid #3e3e3e;
@@ -94,13 +94,26 @@ h1 {
     max-height: 20%;
 }
 
-.question-wrapper {
+.question-text {
     border: 1px solid #3e3e3e;
     border-radius: 5px;
     margin: 4px;
     cursor: pointer;
-    padding: 4px;
+    /*padding: 3px;*/
+    justify-content: space-between;
 }
+
+.del-button {
+    border-left: 1px solid;
+    padding: 0 6px;
+}
+
+.del-button:hover {
+    transition: 0.3s;
+    background-color: #d50c0c;
+    color: white;
+}
+
 .tree-node-type {
     height: 15px;
 }
@@ -108,3 +121,51 @@ h1 {
 .file-icon {
     margin-left: 15px;
 }
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+
+.dropdown-label {
+    display: inline-block;
+    cursor: pointer;
+    background-color: #81400a;
+    color: white;
+    padding: 2px 4px;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #a38774;
+    min-width: 100px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+    border-radius: 5px;
+    margin-top: 5px;
+}
+
+.dropdown-content a, .dropdown-content div {
+    color: black;
+    padding: 10px 16px;
+    text-decoration: none;
+    display: block;
+}
+
+.dropdown-content a:hover {
+    background-color: #876f60;
+}
+
+.dropdown.open .dropdown-content {
+    display: block;
+}
+
+#selected-branch-option {
+    border: 1px solid black;
+    margin: 5px;
+}
+

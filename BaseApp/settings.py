@@ -18,14 +18,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 env = environ.FileAwareEnv()
-env.read_env(BASE_DIR.joinpath(".env"))
+env.read_env(BASE_DIR.joinpath(".env.main"))
 
-
+ENVIRONMENT_STATUS = env.str("DJANGO__ENVIRONMENT_STATUS", "IDEStart")
+DB_HOST = env.str("DJANGO__DD_HOST", "localhost")
+print(f"{DB_HOST=}")
 GITHUB_TOKEN = env.str("GITHUB__TOKEN")
 GEMINI_API_KEY = env.str("GEMINI__API_KEY")
 GEMINI_MODEL = env.str("GEMINI__MODEL")
 
 APPS_DIR = BASE_DIR.joinpath('apps')
+
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -34,7 +38,10 @@ APPS_DIR = BASE_DIR.joinpath('apps')
 SECRET_KEY = env.str("DJANGO__SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+if ENVIRONMENT_STATUS == "prod":
+    DEBUG = False
+else:
+    DEBUG = True
 
 ALLOWED_HOSTS = [
     '0.0.0.0',
@@ -107,8 +114,9 @@ DATABASES = {
         'NAME': 'my_postgres_db',
         'USER': 'postgres',
         'PASSWORD': '12345',
-        'HOST': "db",
+        # 'HOST': "db",
         # 'HOST': "localhost",
+        'HOST': DB_HOST,
         'PORT': '5432',
     }
 }
@@ -157,8 +165,17 @@ STATICFILES_DIRS = [APPS_DIR / "static"]
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-CELERY_BROKER_URL = 'redis://redis:6379/0'
-CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+if ENVIRONMENT_STATUS == "prod":
+    CELERY_BROKER_URL = 'redis://redis:6379/0'
+    CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+elif ENVIRONMENT_STATUS == "IDEStart":
+    CELERY_BROKER_URL = 'redis://localhost:6400/0'
+    CELERY_RESULT_BACKEND = 'redis://localhost:6400/0'
+elif ENVIRONMENT_STATUS == "dev":
+    CELERY_BROKER_URL = 'redis://redis:6379/0'
+    CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+
+
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 
