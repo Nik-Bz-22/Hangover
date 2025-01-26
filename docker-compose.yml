@@ -8,8 +8,6 @@ services:
       - celery
       - db
     environment:
-##      - CELERY_BROKER_URL=redis://redis:6379/0
-#      - DJANGO_SETTINGS_MODULE=BaseApp.settings
       - DJANGO__DD_HOST=${DJANGO__DD_HOST}
       - DJANGO__ENVIRONMENT_STATUS=${DJANGO__ENVIRONMENT_STATUS}
     volumes:
@@ -25,12 +23,8 @@ services:
     depends_on:
       - redis
     environment:
-##      - CELERY_BROKER_URL=redis://redis:6379/0
-#      - DJANGO_SETTINGS_MODULE=BaseApp.settings
       - DJANGO__DD_HOST=${DJANGO__DD_HOST}
       - DJANGO__ENVIRONMENT_STATUS=${DJANGO__ENVIRONMENT_STATUS}
-
-
     profiles:
       - dev
       - prod
@@ -49,10 +43,6 @@ services:
     container_name: postgres_container
     ports:
       - "5432:5432"
-#    environment:
-#      POSTGRES_USER: postgres
-#      POSTGRES_PASSWORD: 12345
-#      POSTGRES_DB: my_postgres_db
     profiles:
       - dev
       - prod
