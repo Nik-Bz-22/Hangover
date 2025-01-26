@@ -44,11 +44,11 @@ These instructions will get you a copy of the project up and running on your loc
 
 2. **Create and fill the .env.main with your info**
 3. **Change the .env.dev and .env.prod (if needed)**
-4. Run with Make
+4. **Run with Make**
     ```bash
       make run-prod
     ```
-5. Running the Application
+5. **Running the Application**
 * Once the containers are running, the Django development server will be accessible at http://localhost:8000.
 
 ---
