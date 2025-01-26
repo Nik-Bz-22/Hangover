@@ -1,8 +1,10 @@
-from .forms import CustomUserCreationForm, CustomAuthenticationForm
-from django.contrib.auth.views import LoginView
-from django.views.generic import CreateView
+from django.contrib.auth.forms import UserChangeForm
+from django.contrib.auth.views import LoginView, PasswordChangeView, PasswordChangeDoneView
+from .forms import CustomUserCreationForm, CustomAuthenticationForm, CustomUserChangeForm
+from ..Repository.utils.models_utils import BaseAccountAccess
+from django.views.generic import CreateView, UpdateView
 from django.shortcuts import redirect
-from django.contrib.auth import login
+from django.contrib.auth import login, get_user_model
 from django.urls import reverse_lazy
 from django.contrib import messages
 from ..Core.utils import DataMixin
@@ -36,3 +38,23 @@ class LogIn(DataMixin, LoginView):
             return redirect('home')
         messages.success(self.request, 'Login successful!')
         return super().form_valid(form)
+
+class ChangePasswordView(BaseAccountAccess, PasswordChangeView):
+    template_name = 'loginer/change_password.html'
+    page_title = 'Change Password'
+
+
+class PasswordChangedView(BaseAccountAccess, PasswordChangeDoneView):
+    template_name = 'loginer/password_change_done.html'
+    page_title = 'Password Changed'
+
+
+class UpdateUserSettingsView(BaseAccountAccess, UpdateView):
+    model = get_user_model()
+    template_name = 'loginer/update_user_settings.html'
+    form_class = CustomUserChangeForm
+    success_url = reverse_lazy('home')
+    page_title = 'Update User Settings'
+
+    def get_object(self, queryset=None):
+        return self.request.user

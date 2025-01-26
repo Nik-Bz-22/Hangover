@@ -1,11 +1,18 @@
 {% extends "../main/base.html" %}
-{#{% load static %}#}
-{#{% block title %} Log In {% endblock title %}#}
+
 {% block content %}
-    <h1>Log In page</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Login</button>
-    </form>
+    <h1 class="center-h">Log In page</h1>
+    <div class="form-display">
+        {% include "../_helper/form_output.html" with form=form %}
+        <div style="display: flex; justify-content: center; margin-top: 20px;">
+            <div style="display: flex; justify-content: center">
+                <p style="border-right: #252525 1px solid;">Don't have an account?
+                    <a style="padding-left: 5px;" href="{% url 'sign_up' %}" class="btn btn-link">Sign up</a>
+                </p>
+                <p style="padding-left: 12px;">Forgot password?
+                    <a style="padding-left: 5px;" href="{% url 'sign_up' %}" class="btn btn-link">Change</a>
+                </p>
+            </div>
+        </div>
+    </div>
 {% endblock content %}

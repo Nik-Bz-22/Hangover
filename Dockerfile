@@ -27,12 +27,8 @@ COPY --chown=${USER} ./BaseApp BaseApp
 COPY --chown=${USER} ./apps apps
 
 
-
 USER ${USER}
-
 
 EXPOSE 8000
 
-
 CMD ["./start.sh"]
-#CMD ["ls"]

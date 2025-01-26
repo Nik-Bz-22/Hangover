@@ -14,6 +14,23 @@ function openDatabase() {
     });
 }
 
+async function startUpdateBranch(branch_id) {
+    fetch(
+        branchUpdateUrl,
+        {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({
+                "selectedBranchID": branch_id,
+                "repository_id": repoID
+            })
+        }
+    )
+}
+
 async function getRepoModifiedStatus(repo_owner, repo_name, selectedBranchName) {
     const ModifiedDate = localStorage.getItem(`${repo_owner}/${repo_name}/${selectedBranchName}/ModifiedDate`);
 
@@ -41,10 +58,10 @@ async function preloadData(repo_owner, repo_name, innerApiUrl, selectedBranchNam
             console.log("No changes in repo");
             return;
         }
-
         console.log("Preloading data");
+        startUpdateBranch(selectedBranchID);
         const db = await openDatabase();
-        const response = await fetch(`${innerApiUrl}?branch=${selectedBranchName}`);
+        const response = await fetch(`${innerApiUrl}?branch=${selectedBranchID}`);
         const data = await response.json();
 
         const transaction = db.transaction('cacheStore', 'readwrite');

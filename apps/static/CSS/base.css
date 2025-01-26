@@ -99,3 +99,16 @@
     position: absolute;
     left: 130px;
 }
+
+.center-h {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.form-display {
+    margin-left: auto;
+    border: 1px solid black;
+    padding: 5px;
+    width: 45%;
+    margin-right: auto;
+}

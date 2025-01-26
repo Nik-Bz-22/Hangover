@@ -1,10 +1,12 @@
 {% extends "../main/base.html" %}
-{#{% block title %} Sign Up {% endblock title %}#}
 {% block content %}
-    <h1>Sign Up page</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">register</button>
-    </form>
+    <h1 class="center-h">Sign Up page</h1>
+    <div class="form-display">
+        {% include "../_helper/form_output.html" with form=form %}
+        <div style="display: flex; justify-content: center; margin-top: 20px;">
+            <p>Already have an account?
+                <a href="{% url 'log_in' %}" class="btn btn-link">Login</a>
+            </p>
+        </div>
+    </div>
 {% endblock content %}

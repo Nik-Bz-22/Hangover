@@ -1,0 +1,22 @@
+<div class="container">
+    <div class="row justify-content-center">
+            <form action="" method="post" novalidate class="needs-validation" style="display: inline-grid;">
+                {% csrf_token %}
+                {% for fm in form %}
+                    <div class="form-group" style="margin: 20px; display: grid; grid-template-columns: 1fr 1fr 1fr;">
+                        {{ fm.label_tag }}
+                        {{ fm }}
+                        <small class="text-danger">{{ fm.errors|striptags }}</small>
+                    </div>
+                {% endfor %}
+
+                <button type="submit" class="btn btn-danger" style="margin-top: 30px;">Submit</button>
+            </form>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <small {% if message.tags %} class="{{ message.tags }}" {% endif %}>{{ message }}</small>
+                {% endfor %}
+            {% endif %}
+    </div>
+</div>

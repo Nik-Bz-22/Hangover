@@ -2,8 +2,10 @@
 {% load static %}
 
 {% block content %}
-    <h1 class="center-h">Add Repository</h1>
+    <h1 class="center-h">Change settings</h1>
     <div class="form-display">
+        <a style="display: flex; justify-content: center; margin-top: 20px;" href="{% url 'change_password' %}"> Change password </a>
         {% include "../_helper/form_output.html" with form=form %}
+
     </div>
 {% endblock content %}

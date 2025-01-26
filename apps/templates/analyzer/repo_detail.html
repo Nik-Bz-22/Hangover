@@ -18,7 +18,7 @@
                 <div class="dropdown-content">
                     <div href="?branch={{ selected_branch.name }}" id="selected-branch-option">{{ selected_branch.name }}</div>
                     {% for branch in all_branches %}
-                        <a href="?branch={{ branch.name }}">{{ branch.name }}</a>
+                        <a href="?branch={{ branch.id }}">{{ branch.name }}</a>
                     {% endfor %}
                 </div>
             </div>
@@ -69,7 +69,9 @@
         const selectedBranchName = "{{ selected_branch.name }}";
         const selectedBranchID = "{{ selected_branch.id }}";
         const questionDeleteUrl = "{% url 'api_delete_question' %}";
+        const branchUpdateUrl = "{% url 'api_update_branch' %}";
     </script>
+    <script src="{% static 'JavaScript/CashClear.js' %}"></script>
     <script src="{% static 'JavaScript/RepoDetail.js' %}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>

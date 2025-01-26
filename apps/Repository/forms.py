@@ -1,5 +1,9 @@
+from django.core.exceptions import ValidationError
+
 from apps.Core.models import Repository
 from django import forms
+
+from apps.Repository.utils.git_utils import valid_repo_url
 
 
 class RepositoryForm(forms.ModelForm):
@@ -18,6 +22,6 @@ class RepositoryForm(forms.ModelForm):
 
     def clean_url(self):
         url = self.cleaned_data.get('url')
-        if not url.startswith('http'):
-            raise forms.ValidationError("URL must start with 'http' or 'https'")
+        if not valid_repo_url(url):
+            raise ValidationError("Invalid repository URL. Please provide a correct URL.")
         return url

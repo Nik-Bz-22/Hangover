@@ -19,7 +19,6 @@ class Prompt(models.Model):
     prompt=models.TextField()
     files_context=models.JSONField(default=list, null=True)
     answer=models.TextField()
-    # repository=models.ForeignKey(Repository, on_delete=models.CASCADE, related_name="questions")
     branch=models.ForeignKey("Branch", on_delete=models.CASCADE, related_name="questions")
     
     class Meta:

@@ -22,7 +22,6 @@ env.read_env(BASE_DIR.joinpath(".env.main"))
 
 ENVIRONMENT_STATUS = env.str("DJANGO__ENVIRONMENT_STATUS", "IDEStart")
 DB_HOST = env.str("DJANGO__DD_HOST", "localhost")
-print(f"{DB_HOST=}")
 GITHUB_TOKEN = env.str("GITHUB__TOKEN")
 GEMINI_API_KEY = env.str("GEMINI__API_KEY")
 GEMINI_MODEL = env.str("GEMINI__MODEL")
@@ -39,7 +38,7 @@ SECRET_KEY = env.str("DJANGO__SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 if ENVIRONMENT_STATUS == "prod":
-    DEBUG = False
+    DEBUG = True
 else:
     DEBUG = True
 
